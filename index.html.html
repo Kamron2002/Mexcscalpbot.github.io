@@ -3,244 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trading Bot Control</title>
+    <title>Saraf V44 Control</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* === ДИЗАЙН СИСТЕМЫ === */
         :root {
-            --bg-color: #0d1117;
-            --card-bg: rgba(22, 27, 34, 0.8);
-            --text-main: #e6edf3;
-            --text-sub: #8b949e;
-            --accent: #238636; /* Green */
-            --danger: #da3633; /* Red */
-            --primary: #1f6feb; /* Blue */
-            --glass: rgba(255, 255, 255, 0.05);
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --text: #e6edf3;
+            --sub: #8b949e; 
+            --green: #238636; 
+            --red: #da3633; 
+            --blue: #2f81f7; /* Новый яркий цвет */
+            --orange: #d29922;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* АНИМАЦИИ */
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(35, 134, 54, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0); }
-        }
-
-        @keyframes slide-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* HEADER */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            animation: slide-up 0.3s ease;
-        }
-
-        .status-badge {
-            background: rgba(35, 134, 54, 0.2);
-            color: #3fb950;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #3fb950;
-            border-radius: 50%;
-            animation: pulse-green 2s infinite;
-        }
-
-        /* MAIN CARD */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: slide-up 0.4s ease;
-        }
-
-        h2 { margin: 0 0 15px 0; font-size: 16px; color: var(--text-sub); font-weight: 500; }
-
-        /* INPUTS GRID */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 11px; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 16px; padding-bottom: 50px; }
         
-        input {
-            width: 100%;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid #30363d;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.3); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .badge { background: rgba(47, 129, 247, 0.2); color: var(--blue); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        
+        /* КАРТОЧКИ */
+        .card { background: var(--card); border: 1px solid #30363d; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h3 { margin: 0 0 12px 0; font-size: 13px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        
+        /* СЕТКА */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-box label { display: block; font-size: 11px; color: var(--sub); margin-bottom: 6px; }
+        input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 8px; font-size: 14px; box-sizing: border-box; font-weight: 500; }
+        input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.3); }
 
         /* TOGGLES */
-        .toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            margin-bottom: 8px;
-        }
-        .toggle-label { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .toggle { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-top: 8px; }
+        .toggle span { font-size: 13px; font-weight: 500; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--blue); margin: 0; }
 
-        /* BUTTONS */
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 14px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
+        /* КНОПКИ */
+        .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+        button { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 14px; transition: opacity 0.2s; }
+        button:active { opacity: 0.8; transform: scale(0.98); }
+        
+        .btn-save { background: var(--green); width: 100%; margin-top: 10px; font-size: 16px; }
+        .btn-stop { background: rgba(218, 54, 51, 0.1); border: 1px solid var(--red); color: var(--red); }
+        .btn-add { background: var(--blue); }
+        .btn-stats { background: #30363d; color: var(--text); border: 1px solid #8b949e; }
 
-        .btn:active { transform: scale(0.97); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(31, 111, 235, 0.4); }
-        .btn-danger { background: rgba(218, 54, 51, 0.15); color: #f85149; border: 1px solid rgba(218, 54, 51, 0.3); }
-
+        .hint { font-size: 10px; color: var(--sub); margin-top: 6px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <div style="font-size: 20px; font-weight: bold;">Scalp Bot</div>
-            <div style="font-size: 12px; color: var(--text-sub);">Pro Terminal</div>
+            <div style="font-size: 20px; font-weight: 800;">SARAF V44</div>
+            <div style="font-size: 12px; color: var(--sub);">Full Control Panel</div>
         </div>
-        <div class="status-badge">
-            <div class="status-dot"></div>
-            Online
+        <div class="badge">UPDATED</div>
+    </div>
+
+    <div class="card">
+        <h3>⚡ Параметры Входа</h3>
+        <div class="input-box" style="margin-bottom: 12px;">
+            <label>Торговая пара (SYMBOL)</label>
+            <input type="text" id="symbol" value="ETH/USDC" style="color: var(--blue); font-weight: bold; font-size: 16px;">
+        </div>
+        <div class="grid">
+            <div class="input-box"><label>Лот ($)</label><input type="number" id="amount" value="10"></div>
+            <div class="input-box"><label>Martingale (x)</label><input type="number" id="mart" value="1.5"></div>
+            <div class="input-box"><label>Drop %</label><input type="number" id="drop" value="0.35"></div>
+            <div class="input-box"><label>Take Profit %</label><input type="number" id="tp" value="0.5"></div>
         </div>
     </div>
 
     <div class="card">
-        <h2>⚡ ТОРГОВЫЕ ПАРАМЕТРЫ</h2>
-        <div class="input-group">
-            <label>Торговая пара</label>
-            <input type="text" id="symbol" value="ETH/USDC" style="font-weight: bold; color: var(--primary);">
-        </div>
-        
+        <h3>📏 Диапазон торгов</h3>
         <div class="grid">
-            <div class="input-group">
-                <label>Take Profit %</label>
-                <input type="number" id="tp" value="0.5">
-            </div>
-            <div class="input-group">
-                <label>Step Drop %</label>
-                <input type="number" id="drop" value="0.35">
-            </div>
-            <div class="input-group">
-                <label>Ордер ($)</label>
-                <input type="number" id="amount" value="10">
-            </div>
-            <div class="input-group">
-                <label>Мартингейл (x)</label>
-                <input type="number" id="mart" value="1.5">
-            </div>
+            <div class="input-box"><label>Min Цена (0=Выкл)</label><input type="number" id="min_p" value="0"></div>
+            <div class="input-box"><label>Max Цена (0=Выкл)</label><input type="number" id="max_p" value="0"></div>
+        </div>
+        <div class="hint">Бот не будет покупать, если цена выйдет за эти пределы.</div>
+    </div>
+
+    <div class="card">
+        <h3>🌊 Trailing Profit</h3>
+        <div class="toggle">
+            <span>Включить Trailing</span>
+            <input type="checkbox" id="trail_on">
+        </div>
+        <div class="input-box" style="margin-top: 8px;">
+            <label>Отклонение (Deviation %)</label>
+            <input type="number" id="trail_dev" value="0.1" placeholder="0.1">
+        </div>
+        <div class="hint">
+            При включении бот будет "тянуть" прибыль вверх и продаст только при откате цены назад.
         </div>
     </div>
 
     <div class="card">
-        <h2>🛡️ ЗАЩИТА И ФИЛЬТРЫ</h2>
-        
-        <div class="toggle-row" onclick="toggleSwitch('rsi')">
-            <div class="toggle-label">🧠 Фильтр RSI (Quantum)</div>
-            <input type="checkbox" id="rsi_check">
-        </div>
-
+        <h3>🛡️ Риск-менеджмент</h3>
         <div class="grid">
-            <div class="input-group">
-                <label>Stop Loss %</label>
-                <input type="number" id="sl" placeholder="0 = Выкл">
-            </div>
-            <div class="input-group">
-                <label>RSI Limit</label>
-                <input type="number" id="rsi_val" value="30">
-            </div>
+            <div class="input-box"><label>Stop Loss %</label><input type="number" id="sl" value="0"></div>
+            <div class="input-box"><label>RSI Limit (<)</label><input type="number" id="rsi" value="30"></div>
+        </div>
+        <div class="toggle">
+            <span>Использовать RSI фильтр</span>
+            <input type="checkbox" id="rsi_on">
         </div>
     </div>
 
-    <button class="btn btn-primary" onclick="saveData()">
+    <button class="btn-save" onclick="send('update')">
         💾 СОХРАНИТЬ И ЗАПУСТИТЬ
     </button>
+
+    <div class="btn-row">
+        <button class="btn-add" onclick="send('create_bot')">➕ Новый Бот</button>
+        <button class="btn-stats" onclick="send('get_stats')">📊 Отчет</button>
+    </div>
     
-    <button class="btn btn-danger" onclick="stopBot()">
-        🛑 ЭКСТРЕННАЯ ОСТАНОВКА
-    </button>
+    <div class="btn-row">
+        <button class="btn-stop" onclick="send('stop')">🛑 СТОП</button>
+        <button class="btn-stop" onclick="send('sell_all')" style="border-color: #d29922; color: #d29922;">🚨 ПРОДАТЬ ВСЁ</button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); 
+        tg.expand();
 
-        // Анимация цветов под тему Телеграма
-        document.body.style.backgroundColor = tg.themeParams.bg_color || '#0d1117';
+        // Анимация вибрации
+        function haptic() {
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
 
-        function saveData() {
-            // Вибрация
-            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        function send(action) {
+            haptic();
 
             const data = {
-                action: "update_config",
+                action: action,
                 symbol: document.getElementById('symbol').value.toUpperCase(),
-                tp: parseFloat(document.getElementById('tp').value),
-                drop: parseFloat(document.getElementById('drop').value),
                 amount: parseFloat(document.getElementById('amount').value),
                 mart: parseFloat(document.getElementById('mart').value),
-                sl: parseFloat(document.getElementById('sl').value) || 0,
-                rsi_enable: document.getElementById('rsi_check').checked,
-                rsi_limit: parseFloat(document.getElementById('rsi_val').value)
+                drop: parseFloat(document.getElementById('drop').value),
+                tp: parseFloat(document.getElementById('tp').value),
+                
+                // Новые функции
+                range_min: parseFloat(document.getElementById('min_p').value),
+                range_max: parseFloat(document.getElementById('max_p').value),
+                stop_loss: parseFloat(document.getElementById('sl').value),
+                rsi_limit: parseFloat(document.getElementById('rsi').value),
+                rsi_enable: document.getElementById('rsi_on').checked,
+                
+                trailing_enable: document.getElementById('trail_on').checked,
+                trailing_dev: parseFloat(document.getElementById('trail_dev').value)
             };
             
             tg.sendData(JSON.stringify(data));
-            tg.close();
-        }
-
-        function stopBot() {
-            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            const data = { action: "emergency_stop" };
-            tg.sendData(JSON.stringify(data));
-            tg.close();
+            if(action === 'update' || action === 'stop') tg.close();
         }
     </script>
 </body>

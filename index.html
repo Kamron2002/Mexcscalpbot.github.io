@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ProTrade V51</title>
+    <title>ProTrade V53</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
@@ -12,39 +12,47 @@
         
         .header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .title { font-size: 18px; font-weight: 800; }
-        .status-badge { font-size: 10px; background: rgba(59,130,246,0.1); color: var(--primary); padding: 4px 8px; border-radius: 6px; }
+        .badge { font-size: 10px; background: rgba(59,130,246,0.1); color: var(--primary); padding: 4px 8px; border-radius: 6px; }
 
         .page { display: none; padding: 16px; animation: fade 0.2s; }
         .page.active { display: block; }
         @keyframes fade { from{opacity:0} to{opacity:1} }
 
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
-        .card-header { font-size: 12px; color: var(--sub); text-transform: uppercase; margin-bottom: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .card-header { font-size: 12px; color: var(--sub); text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         label { display: block; font-size: 10px; color: var(--sub); margin-bottom: 4px; }
-        input { width: 100%; background: #000; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        input { width: 100%; background: #000; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; }
         input:focus { border-color: var(--primary); }
 
-        /* СПИСОК БОТОВ */
         .bot-item { display: flex; align-items: center; background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer; }
         .bot-item.selected { border-color: var(--primary); background: rgba(59,130,246,0.05); }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; }
         .dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
         .dot.off { background: var(--red); opacity: 0.5; }
 
-        /* CHART CONTAINER */
-        #tv_chart_container { height: 300px; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border); }
+        /* Chart Modal */
+        #chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding-top: 50px; }
+        #chart-content { height: 70%; width: 95%; margin: 0 auto; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .close-chart { position: absolute; top: 15px; right: 20px; font-size: 30px; color: white; cursor: pointer; }
 
-        /* BUTTONS */
         .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; color: white; margin-top: 8px; font-size: 14px; }
         .btn-save { background: var(--primary); }
         .btn-start { background: var(--green); color: #000; }
         .btn-stop { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid var(--red); }
-        .btn-hist { background: #27272a; border: 1px solid var(--sub); }
+        .btn-chart { background: #27272a; border: 1px solid var(--primary); color: var(--primary); }
+        
+        /* КНОПКА ЭКСТРЕННОГО ВЫХОДА */
+        .btn-panic { 
+            background: linear-gradient(45deg, #ef4444, #b91c1c); 
+            color: white; 
+            margin-top: 20px; 
+            box-shadow: 0 4px 15px rgba(239,68,68,0.3);
+            border: 1px solid #ef4444;
+        }
 
         .fab { position: fixed; bottom: 85px; right: 20px; width: 44px; height: 44px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
-
         .navbar { position: fixed; bottom: 0; width: 100%; background: rgba(24,24,27,0.95); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 99; backdrop-filter: blur(10px); }
         .nav-item { font-size: 9px; color: var(--sub); display: flex; flex-direction: column; align-items: center; opacity: 0.6; }
         .nav-item.active { color: var(--primary); opacity: 1; }
@@ -52,22 +60,22 @@
     </style>
 </head>
 <body>
+    <div id="chart-modal">
+        <div class="close-chart" onclick="closeChart()">×</div>
+        <div id="chart-content"></div>
+    </div>
 
     <div class="header">
-        <div>
-            <div class="title">ProTrade V51</div>
-            <div style="font-size: 11px; color: var(--sub);" id="active_label">Loading...</div>
-        </div>
-        <div class="status-badge">PRO</div>
+        <div><div class="title">ProTrade V53</div><div style="font-size: 11px; color: var(--sub);" id="active_label">Loading...</div></div>
+        <div class="badge">Risk Manager</div>
     </div>
 
     <div id="page-home" class="page active">
-        <div id="tv_chart_container"></div>
-
         <div class="card">
-            <div class="card-header">Session PnL</div>
+            <div class="card-header">Total PnL</div>
             <div style="font-size: 28px; font-weight: 700;">$ <span id="total_pnl">0.00</span></div>
         </div>
+        <button class="btn btn-chart" onclick="openChart()">📈 OPEN CHART</button>
     </div>
 
     <div id="page-bots" class="page">
@@ -77,10 +85,9 @@
     <div id="page-settings" class="page">
         <input type="hidden" id="bot_id">
         <div class="card">
-            <div class="card-header">Main Config</div>
+            <div class="card-header">Config</div>
             <div style="margin-bottom: 10px;">
-                <label>Pair (Symbol)</label>
-                <input type="text" id="symbol" style="color: var(--primary); font-weight: bold;">
+                <label>Pair</label><input type="text" id="symbol" style="color: var(--primary); font-weight: bold;">
             </div>
             <div class="grid">
                 <div><label>Order $</label><input type="number" id="amount"></div>
@@ -89,16 +96,21 @@
                 <div><label>TP %</label><input type="number" id="tp"></div>
             </div>
         </div>
+        
         <div class="card">
-            <div class="card-header">Smart Filters</div>
+            <div class="card-header">Risk & Money Management</div>
+            <div style="margin-bottom: 10px;">
+                <label style="color: var(--green);">💰 Max Budget ($) - REQUIRED for SL</label>
+                <input type="number" id="max_budget" placeholder="e.g. 500" style="border-color: var(--green);">
+            </div>
             <div class="grid">
+                <div><label>Trailing Dev</label><input type="number" id="trail"></div>
+                <div><label style="color: var(--red);">Stop Loss (% of Budget)</label><input type="number" id="sl"></div>
                 <div><label>Min Price</label><input type="number" id="min_p"></div>
                 <div><label>Max Price</label><input type="number" id="max_p"></div>
-                <div><label>Trailing Dev</label><input type="number" id="trail"></div>
-                <div><label>Stop Loss %</label><input type="number" id="sl"></div>
             </div>
-            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: #000; padding: 10px; border-radius: 8px;">
-                <label style="margin:0; font-size: 12px;">🧠 Use RSI Filter (<30)</label>
+            <div style="margin-top: 10px; background: #000; padding: 10px; border-radius: 8px; display:flex; justify-content:space-between;">
+                <label style="margin:0; font-size: 12px;">🧠 RSI Filter (<30)</label>
                 <input type="checkbox" id="rsi_on" style="width: 20px;">
             </div>
         </div>
@@ -107,78 +119,48 @@
             <button class="btn btn-save" onclick="send('save')">💾 SAVE</button>
             <button class="btn btn-start" onclick="send('start')">▶ START</button>
         </div>
-        <button class="btn btn-stop" onclick="send('stop')">⏹ STOP</button>
-        <button class="btn btn-stop" onclick="deleteBot()" style="margin-top: 15px; border:none; background:transparent; color:#666;">Delete Bot</button>
-    </div>
+        <button class="btn btn-stop" onclick="send('stop')">⏹ STOP & HOLD</button>
 
-    <div id="page-history" class="page">
-        <div class="card" style="text-align: center; padding: 40px 20px;">
-            <div style="font-size: 40px; margin-bottom: 10px;">📜</div>
-            <div style="color: var(--sub); font-size: 13px; margin-bottom: 20px;">
-                Download full trade history report to Telegram chat.
-            </div>
-            <button class="btn btn-hist" onclick="send('get_history')">📥 Get Report</button>
-        </div>
+        <button class="btn btn-panic" onclick="forceExit()">
+            📉 FORCE EXIT (SELL MARKET)
+        </button>
+        
+        <button class="btn btn-stop" onclick="deleteBot()" style="margin-top: 15px; border:none; background:transparent; color:#666;">Delete Bot</button>
     </div>
 
     <div class="fab" onclick="addBot()">+</div>
 
     <div class="navbar">
-        <div class="nav-item active" onclick="nav('home')"><div class="nav-icon">📈</div>Chart</div>
+        <div class="nav-item active" onclick="nav('home')"><div class="nav-icon">📊</div>Stats</div>
         <div class="nav-item" onclick="nav('bots')"><div class="nav-icon">🤖</div>Bots</div>
-        <div class="nav-item" onclick="nav('history')"><div class="nav-icon">📜</div>Logs</div>
-        <div class="nav-item" onclick="nav('settings')"><div class="nav-icon">⚙️</div>Setup</div>
+        <div class="nav-item" onclick="nav('settings')"><div class="nav-icon">⚙️</div>Config</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-
-        let bots = JSON.parse(localStorage.getItem('my_bots_v51')) || [
-            {id: 'MAIN', name: 'Main Bot', status: false, config: {symbol: 'ETH/USDC', amount: 10, mart: 1.5, drop: 0.35, tp: 0.5, min: 0, max: 0, trail: 0.1, sl: 0, rsi: false}}
+        let bots = JSON.parse(localStorage.getItem('my_bots_v53')) || [
+            {id: 'MAIN', name: 'Main Bot', status: false, config: {symbol: 'ETH/USDC', amount: 10, mart: 1.5, drop: 0.35, tp: 0.5, min: 0, max: 0, trail: 0.1, sl: 0, rsi: false, max_budget: 100}}
         ];
-
-        function saveLocal() { localStorage.setItem('my_bots_v51', JSON.stringify(bots)); }
-
+        function saveLocal() { localStorage.setItem('my_bots_v53', JSON.stringify(bots)); }
         function nav(page) {
             document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
             document.getElementById('page-'+page).classList.add('active');
-            
-            const idx = ['home', 'bots', 'history', 'settings'].indexOf(page);
+            const idx = ['home', 'bots', 'settings'].indexOf(page);
             document.querySelectorAll('.nav-item')[idx].classList.add('active');
             document.querySelector('.fab').style.display = (page === 'bots') ? 'flex' : 'none';
-
-            // Если открыли главную - обновляем график
-            if(page === 'home') loadChart();
         }
-
-        function loadChart() {
-            // Берем символ активного или первого бота
+        function openChart() {
             const activeId = document.getElementById('bot_id').value || 'MAIN';
             const bot = bots.find(b => b.id === activeId) || bots[0];
-            const pair = bot.config.symbol.replace('/', '').toUpperCase(); // ETHUSDC
-            
-            new TradingView.widget({
-                "width": "100%",
-                "height": 300,
-                "symbol": "MEXC:" + pair,
-                "interval": "5",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "hide_top_toolbar": true,
-                "save_image": false,
-                "container_id": "tv_chart_container"
-            });
+            const pair = bot.config.symbol.replace('/', '').toUpperCase();
+            document.getElementById('chart-modal').style.display = 'block';
+            new TradingView.widget({ "width": "100%", "height": "100%", "symbol": "MEXC:" + pair, "interval": "5", "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_top_toolbar": true, "container_id": "chart-content" });
         }
-
+        function closeChart() { document.getElementById('chart-modal').style.display = 'none'; }
         function renderBots() {
-            const list = document.getElementById('bot-list');
-            list.innerHTML = '';
+            const list = document.getElementById('bot-list'); list.innerHTML = '';
             bots.forEach(b => {
                 const el = document.createElement('div');
                 el.className = `bot-item ${document.getElementById('bot_id').value === b.id ? 'selected' : ''}`;
@@ -187,18 +169,15 @@
                 list.appendChild(el);
             });
         }
-
         function addBot() {
             const id = 'BOT_' + Math.floor(Math.random()*9999);
-            bots.push({id: id, name: 'Strategy '+bots.length, status: false, config: {symbol: 'BTC/USDC', amount: 10, mart: 1.5, drop: 0.35, tp: 0.5, min: 0, max: 0, trail: 0.1, sl: 0, rsi: false}});
+            bots.push({id: id, name: 'Strategy '+bots.length, status: false, config: {symbol: 'BTC/USDC', amount: 10, mart: 1.5, drop: 0.35, tp: 0.5, min: 0, max: 0, trail: 0.1, sl: 0, rsi: false, max_budget: 0}});
             saveLocal(); renderBots(); openSettings(id);
         }
-
         function openSettings(id) {
             const bot = bots.find(b => b.id === id);
             document.getElementById('bot_id').value = bot.id;
             document.getElementById('active_label').innerText = bot.name;
-            
             const c = bot.config;
             document.getElementById('symbol').value = c.symbol;
             document.getElementById('amount').value = c.amount;
@@ -209,24 +188,24 @@
             document.getElementById('max_p').value = c.max || 0;
             document.getElementById('trail').value = c.trail || 0.1;
             document.getElementById('sl').value = c.sl || 0;
+            document.getElementById('max_budget').value = c.max_budget || 0;
             document.getElementById('rsi_on').checked = c.rsi || false;
-            
             nav('settings');
         }
-
         function deleteBot() {
             const id = document.getElementById('bot_id').value;
             if(id === 'MAIN') return alert("Cannot delete Main");
             if(confirm("Delete?")) { bots = bots.filter(b => b.id !== id); saveLocal(); send('stop'); renderBots(); nav('bots'); }
         }
-
+        function forceExit() {
+            if(confirm("⚠️ FORCE EXIT (STOP LOSS)\nCancel all orders and sell immediately?")) {
+                send('force_exit');
+            }
+        }
         function send(action) {
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            if(action === 'get_history') { tg.sendData(JSON.stringify({action: 'get_history'})); return; }
-
             const id = document.getElementById('bot_id').value;
             const bot = bots.find(b => b.id === id);
-            
             bot.config = {
                 symbol: document.getElementById('symbol').value.toUpperCase(),
                 amount: parseFloat(document.getElementById('amount').value),
@@ -237,18 +216,15 @@
                 max: parseFloat(document.getElementById('max_p').value),
                 trail: parseFloat(document.getElementById('trail').value),
                 sl: parseFloat(document.getElementById('sl').value),
+                max_budget: parseFloat(document.getElementById('max_budget').value),
                 rsi: document.getElementById('rsi_on').checked
             };
-
             if(action === 'start') bot.status = true;
-            if(action === 'stop') bot.status = false;
+            if(action === 'stop' || action === 'force_exit') bot.status = false;
             saveLocal(); renderBots();
-
             tg.sendData(JSON.stringify({ action: action, bot_id: id, ...bot.config }));
         }
-
-        renderBots();
-        nav('home'); // Load chart on start
+        renderBots(); nav('home');
     </script>
 </body>
 </html>
